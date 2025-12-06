@@ -76,6 +76,9 @@ dependencies {
 
     // ML Kit Text Recognition (on-device)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+    
+    // ML Kit Digital Ink Recognition for handwriting (better accuracy)
+    implementation("com.google.mlkit:digital-ink-recognition:18.1.0")
 
     // Kotlinx serialization for simple JSON persistence
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")

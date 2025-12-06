@@ -125,6 +125,15 @@ object Repository {
         list.add(record)
         saveScans(list)
     }
+    
+    fun updateScanWithStudent(scanId: String, studentId: String) {
+        val scans = loadScans().toMutableList()
+        val index = scans.indexOfFirst { it.id == scanId }
+        if (index >= 0) {
+            scans[index] = scans[index].copy(studentId = studentId)
+            saveScans(scans)
+        }
+    }
 
     fun saveScans(list: List<ScanRecord>) {
         val arr = org.json.JSONArray()

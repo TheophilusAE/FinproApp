@@ -6,11 +6,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Grade
 import androidx.compose.material3.*
@@ -31,18 +33,21 @@ import kotlinx.coroutines.launch
 fun GradingWorkflowScreen(navController: NavController) {
     var questions by remember { mutableStateOf<List<Question>>(emptyList()) }
     var scans by remember { mutableStateOf<List<ScanRecord>>(emptyList()) }
+    var students by remember { mutableStateOf<List<com.example.myapplication.data.Student>>(emptyList()) }
     var selectedScan by remember { mutableStateOf<ScanRecord?>(null) }
-    var studentId by remember { mutableStateOf("") }
+    var selectedStudent by remember { mutableStateOf<com.example.myapplication.data.Student?>(null) }
     var examId by remember { mutableStateOf("") }
     var isGrading by remember { mutableStateOf(false) }
     var gradingComplete by remember { mutableStateOf(false) }
     var lastScore by remember { mutableStateOf(0.0) }
+    var showStudentPicker by remember { mutableStateOf(false) }
     
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         questions = Repository.loadQuestions()
         scans = Repository.loadScans()
+        students = Repository.loadStudents()
     }
 
     Column(
@@ -113,23 +118,45 @@ fun GradingWorkflowScreen(navController: NavController) {
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Student Information",
+                            text = "Exam Information",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        OutlinedTextField(
-                            value = studentId,
-                            onValueChange = { studentId = it },
-                            label = { Text("Student ID") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
-                        )
+                        
+                        // Student Selection
+                        OutlinedButton(
+                            onClick = { showStudentPicker = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = if (selectedStudent != null) selectedStudent!!.name else "Select Student",
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                    if (selectedStudent != null) {
+                                        Text(
+                                            text = "ID: ${selectedStudent!!.studentNumber}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                                Icon(Icons.Default.ArrowDropDown, null)
+                            }
+                        }
+                        
                         Spacer(modifier = Modifier.height(8.dp))
                         OutlinedTextField(
                             value = examId,
                             onValueChange = { examId = it },
                             label = { Text("Exam ID") },
+                            placeholder = { Text("e.g., MIDTERM_2024") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true
                         )
@@ -205,22 +232,23 @@ fun GradingWorkflowScreen(navController: NavController) {
                 
                 Button(
                     onClick = {
-                        if (selectedScan != null && studentId.isNotBlank() && examId.isNotBlank() && questions.isNotEmpty()) {
+                        if (selectedScan != null && selectedStudent != null && examId.isNotBlank() && questions.isNotEmpty()) {
                             scope.launch {
                                 isGrading = true
                                 gradingComplete = false
                                 
-                                // Parse answers from recognized text (simple line-by-line parsing)
-                                val answers = mutableMapOf<String, String>()
-                                selectedScan!!.recognizedText.lines().forEachIndexed { index, line ->
-                                    if (line.isNotBlank() && index < questions.size) {
-                                        answers[questions[index].id] = line.trim()
-                                    }
-                                }
+                                // Improved answer parsing - handles multiple formats
+                                val answers = parseAnswersFromText(
+                                    selectedScan!!.recognizedText,
+                                    questions
+                                )
                                 
                                 // Grade
-                                val result = Grader.grade(questions, answers, studentId, examId)
+                                val result = Grader.grade(questions, answers, selectedStudent!!.id, examId)
                                 lastScore = result.totalScore
+                                
+                                // Update scan with student ID
+                                Repository.updateScanWithStudent(selectedScan!!.id, selectedStudent!!.id)
                                 
                                 // Save result
                                 Repository.saveExamResult(result)
@@ -233,7 +261,7 @@ fun GradingWorkflowScreen(navController: NavController) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    enabled = !isGrading && selectedScan != null && studentId.isNotBlank() && examId.isNotBlank() && questions.isNotEmpty()
+                    enabled = !isGrading && selectedScan != null && selectedStudent != null && examId.isNotBlank() && questions.isNotEmpty()
                 ) {
                     if (isGrading) {
                         CircularProgressIndicator(
@@ -262,6 +290,69 @@ fun GradingWorkflowScreen(navController: NavController) {
                     }
                 }
             }
+        }
+        
+        // Student Picker Dialog
+        if (showStudentPicker) {
+            AlertDialog(
+                onDismissRequest = { showStudentPicker = false },
+                title = { Text("Select Student") },
+                text = {
+                    LazyColumn {
+                        if (students.isEmpty()) {
+                            item {
+                                Text(
+                                    "No students found. Add students first.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.error
+                                )
+                            }
+                        } else {
+                            items(students) { student ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clickable {
+                                            selectedStudent = student
+                                            showStudentPicker = false
+                                        },
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (selectedStudent?.id == student.id)
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        else
+                                            MaterialTheme.colorScheme.surface
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(
+                                            text = student.name,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = "ID: ${student.studentNumber}",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                        if (student.email.isNotBlank()) {
+                                            Text(
+                                                text = student.email,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showStudentPicker = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
     }
 }
@@ -339,4 +430,60 @@ private fun ScanSelectionCard(
             }
         }
     }
+}
+
+/**
+ * Improved answer parsing that handles multiple formats:
+ * - "1. A" or "1) A" or "Q1: A" or "Question 1: A"
+ * - Line-by-line answers
+ * - Number-answer pairs
+ */
+private fun parseAnswersFromText(text: String, questions: List<Question>): Map<String, String> {
+    val answers = mutableMapOf<String, String>()
+    val lines = text.lines().map { it.trim() }.filter { it.isNotBlank() }
+    
+    // Try pattern matching first: "1. Answer" or "Q1: Answer"
+    val patterns = listOf(
+        Regex("""^(\d+)[\.):\s]+(.+)$"""),           // "1. Answer" or "1) Answer" or "1: Answer"
+        Regex("""^[Qq](\d+)[\.):\s]+(.+)$"""),       // "Q1. Answer" or "q1: Answer"
+        Regex("""^Question\s*(\d+)[\.):\s]+(.+)$""", RegexOption.IGNORE_CASE)  // "Question 1: Answer"
+    )
+    
+    var matchedCount = 0
+    for (line in lines) {
+        for (pattern in patterns) {
+            val match = pattern.find(line)
+            if (match != null) {
+                val questionNum = match.groupValues[1].toIntOrNull() ?: continue
+                val answer = match.groupValues[2].trim()
+                
+                // Map question number to question ID
+                if (questionNum > 0 && questionNum <= questions.size) {
+                    val questionId = questions[questionNum - 1].id
+                    answers[questionId] = answer
+                    matchedCount++
+                }
+                break
+            }
+        }
+    }
+    
+    // If pattern matching didn't work well, fall back to line-by-line
+    if (matchedCount < questions.size / 2) {
+        answers.clear()
+        lines.forEachIndexed { index, line ->
+            if (index < questions.size) {
+                // Remove common prefixes
+                var cleanLine = line
+                    .replace(Regex("""^(\d+[\.):\s]+|[Qq]\d+[\.):\s]+|Question\s*\d+[\.):\s]+)""", RegexOption.IGNORE_CASE), "")
+                    .trim()
+                
+                if (cleanLine.isNotBlank()) {
+                    answers[questions[index].id] = cleanLine
+                }
+            }
+        }
+    }
+    
+    return answers
 }
