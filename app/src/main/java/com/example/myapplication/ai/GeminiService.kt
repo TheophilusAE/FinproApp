@@ -231,10 +231,18 @@ Ensure all question IDs from the input are included in the output.
                         0.0
                     }
                 }
+                com.example.myapplication.data.QuestionType.SHORT_TEXT -> {
+                    // Keyword matching with partial credit
+                    val similarity = calculateSimilarity(studentAns, correctAns)
+                    val adjustedSim = if (similarity > 0.3) similarity.coerceAtLeast(0.4) else similarity
+                    feedback[q.id] = "Score based on keyword matching (${(adjustedSim * 100).toInt()}%)"
+                    adjustedSim * q.weight
+                }
+                com.example.myapplication.data.QuestionType.LONG_TEXT,
                 com.example.myapplication.data.QuestionType.ESSAY -> {
                     // Simple word matching for fallback
                     val similarity = calculateSimilarity(studentAns, correctAns)
-                    feedback[q.id] = "Score based on keyword matching"
+                    feedback[q.id] = "Score based on keyword matching (${(similarity * 100).toInt()}%)"
                     similarity * q.weight
                 }
             }

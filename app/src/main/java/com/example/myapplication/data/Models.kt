@@ -10,7 +10,12 @@ data class Question(
     val explanation: String? = null
 )
 
-enum class QuestionType { MCQ, ESSAY }
+enum class QuestionType { 
+    MCQ,           // Multiple choice
+    SHORT_TEXT,    // Short handwritten answer (1-3 sentences)
+    LONG_TEXT,     // Long handwritten answer (paragraph/essay)
+    ESSAY          // Legacy essay type (same as LONG_TEXT)
+}
 
 data class ExamResult(
     val studentId: String,

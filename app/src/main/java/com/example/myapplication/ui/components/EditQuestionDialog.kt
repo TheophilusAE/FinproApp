@@ -51,6 +51,23 @@ fun EditQuestionDialog(
                         modifier = Modifier.weight(1f)
                     )
                     FilterChip(
+                        selected = selectedType == QuestionType.SHORT_TEXT,
+                        onClick = { selectedType = QuestionType.SHORT_TEXT },
+                        label = { Text("Short") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = selectedType == QuestionType.LONG_TEXT,
+                        onClick = { selectedType = QuestionType.LONG_TEXT },
+                        label = { Text("Long") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    FilterChip(
                         selected = selectedType == QuestionType.ESSAY,
                         onClick = { selectedType = QuestionType.ESSAY },
                         label = { Text("Essay") },

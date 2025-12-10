@@ -30,6 +30,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Add
@@ -85,18 +86,34 @@ fun QuestionBankScreen(navController: NavController) {
                 color = MaterialTheme.colorScheme.primary,
                 shadowElevation = 4.dp
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = "Question Bank",
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "${questions.size} question${if (questions.size != 1) "s" else ""}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    androidx.compose.material3.IconButton(
+                        onClick = { navController.navigateUp() }
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    Column(modifier = Modifier.padding(start = 8.dp)) {
+                        Text(
+                            text = "Question Bank",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "${questions.size} question${if (questions.size != 1) "s" else ""}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                        )
+                    }
                 }
             }
 
@@ -210,20 +227,29 @@ private fun QuestionCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Card(
                         colors = CardDefaults.cardColors(
-                            containerColor = if (question.type == com.example.myapplication.data.QuestionType.MCQ)
-                                MaterialTheme.colorScheme.primaryContainer
-                            else
-                                MaterialTheme.colorScheme.secondaryContainer
+                            containerColor = when (question.type) {
+                                com.example.myapplication.data.QuestionType.MCQ -> MaterialTheme.colorScheme.primaryContainer
+                                com.example.myapplication.data.QuestionType.SHORT_TEXT -> MaterialTheme.colorScheme.tertiaryContainer
+                                com.example.myapplication.data.QuestionType.LONG_TEXT -> MaterialTheme.colorScheme.secondaryContainer
+                                com.example.myapplication.data.QuestionType.ESSAY -> MaterialTheme.colorScheme.secondaryContainer
+                            }
                         )
                     ) {
                         Text(
-                            text = question.type.name,
+                            text = when (question.type) {
+                                com.example.myapplication.data.QuestionType.MCQ -> "Multiple Choice"
+                                com.example.myapplication.data.QuestionType.SHORT_TEXT -> "Short Text"
+                                com.example.myapplication.data.QuestionType.LONG_TEXT -> "Long Text"
+                                com.example.myapplication.data.QuestionType.ESSAY -> "Essay"
+                            },
                             style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = if (question.type == com.example.myapplication.data.QuestionType.MCQ)
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            else
-                                MaterialTheme.colorScheme.onSecondaryContainer
+                            color = when (question.type) {
+                                com.example.myapplication.data.QuestionType.MCQ -> MaterialTheme.colorScheme.onPrimaryContainer
+                                com.example.myapplication.data.QuestionType.SHORT_TEXT -> MaterialTheme.colorScheme.onTertiaryContainer
+                                com.example.myapplication.data.QuestionType.LONG_TEXT -> MaterialTheme.colorScheme.onSecondaryContainer
+                                com.example.myapplication.data.QuestionType.ESSAY -> MaterialTheme.colorScheme.onSecondaryContainer
+                            }
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

@@ -426,14 +426,20 @@ object Repository {
     // Initialize demo data for first-time users
     fun initializeDemoData(context: Context) {
         try {
-            // Only initialize if data doesn't exist
+            val prefs = context.getSharedPreferences("finpro_app_prefs", Context.MODE_PRIVATE)
+            val currentDataVersion = prefs.getInt("demo_data_version", 0)
+            val DEMO_DATA_VERSION = 2 // Increment this when demo data changes
+            
+            // Force reinitialize if version changed or data is empty
             val currentQuestions = loadQuestions()
             android.util.Log.d("Repository", "Current questions count: ${currentQuestions.size}")
+            android.util.Log.d("Repository", "Demo data version: $currentDataVersion (expected: $DEMO_DATA_VERSION)")
             
-            if (currentQuestions.isEmpty()) {
-                android.util.Log.d("Repository", "Initializing demo questions...")
-                // Add sample questions
+            if (currentQuestions.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
+                android.util.Log.d("Repository", "Initializing demo questions (version $DEMO_DATA_VERSION)...")
+                // Add comprehensive sample questions with various types
             val sampleQuestions = listOf(
+                // MCQ Questions
                 Question(
                     id = "q1",
                     text = "What is the capital of Indonesia?",
@@ -445,24 +451,6 @@ object Repository {
                 ),
                 Question(
                     id = "q2",
-                    text = "What is 15 + 27?",
-                    type = QuestionType.MCQ,
-                    options = emptyList(),
-                    answer = "42",
-                    weight = 10.0,
-                    explanation = "15 + 27 = 42"
-                ),
-                Question(
-                    id = "q3",
-                    text = "Indonesia gained independence in which year?",
-                    type = QuestionType.MCQ,
-                    options = emptyList(),
-                    answer = "1945",
-                    weight = 10.0,
-                    explanation = "Indonesia proclaimed its independence on August 17, 1945"
-                ),
-                Question(
-                    id = "q4",
                     text = "What is the largest planet in our solar system?",
                     type = QuestionType.MCQ,
                     options = listOf("Earth", "Jupiter", "Saturn", "Mars"),
@@ -471,25 +459,114 @@ object Repository {
                     explanation = "Jupiter is the largest planet"
                 ),
                 Question(
-                    id = "q5",
-                    text = "Water freezes at what temperature in Celsius?",
+                    id = "q3",
+                    text = "Who painted the Mona Lisa?",
                     type = QuestionType.MCQ,
-                    options = emptyList(),
-                    answer = "0",
+                    options = listOf("Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"),
+                    answer = "Leonardo da Vinci",
                     weight = 10.0,
-                    explanation = "Water freezes at 0°C (32°F)"
+                    explanation = "Leonardo da Vinci painted the Mona Lisa in the early 16th century"
+                ),
+                Question(
+                    id = "q4",
+                    text = "What is 25 x 4?",
+                    type = QuestionType.MCQ,
+                    options = listOf("90", "100", "110", "120"),
+                    answer = "100",
+                    weight = 10.0,
+                    explanation = "25 multiplied by 4 equals 100"
+                ),
+                
+                // Short Text Questions
+                Question(
+                    id = "q5",
+                    text = "Define photosynthesis in your own words.",
+                    type = QuestionType.SHORT_TEXT,
+                    options = emptyList(),
+                    answer = "process where plants convert sunlight into energy using chlorophyll",
+                    weight = 15.0,
+                    explanation = "Photosynthesis is the process by which plants use sunlight to produce food"
+                ),
+                Question(
+                    id = "q6",
+                    text = "Describe the importance of recycling.",
+                    type = QuestionType.SHORT_TEXT,
+                    options = emptyList(),
+                    answer = "reduces waste saves resources protects environment conserves energy",
+                    weight = 15.0,
+                    explanation = "Recycling helps reduce waste, conserve natural resources, and protect the environment"
+                ),
+                Question(
+                    id = "q7",
+                    text = "What are the three states of matter?",
+                    type = QuestionType.SHORT_TEXT,
+                    options = emptyList(),
+                    answer = "solid liquid gas",
+                    weight = 12.0,
+                    explanation = "The three basic states of matter are solid, liquid, and gas"
+                ),
+                Question(
+                    id = "q8",
+                    text = "Name three renewable energy sources.",
+                    type = QuestionType.SHORT_TEXT,
+                    options = emptyList(),
+                    answer = "solar wind hydroelectric geothermal biomass",
+                    weight = 12.0,
+                    explanation = "Renewable energy sources include solar, wind, and hydroelectric power"
+                ),
+                
+                // Long Text / Essay Questions
+                Question(
+                    id = "q9",
+                    text = "Write a paragraph explaining the water cycle.",
+                    type = QuestionType.LONG_TEXT,
+                    options = emptyList(),
+                    answer = "The water cycle is a continuous process. Water evaporates from oceans and lakes, forms clouds through condensation, falls as precipitation like rain or snow, and returns to water bodies through runoff. This cycle is essential for distributing water across Earth and supporting all life forms.",
+                    weight = 20.0,
+                    explanation = "The water cycle involves evaporation, condensation, precipitation, and collection"
+                ),
+                Question(
+                    id = "q10",
+                    text = "Explain how volcanoes are formed and why they erupt.",
+                    type = QuestionType.LONG_TEXT,
+                    options = emptyList(),
+                    answer = "Volcanoes form when molten rock, called magma, rises from deep within the Earth. This happens at tectonic plate boundaries where plates collide or separate. When pressure builds up from gases in the magma, it forces its way through weak spots in the Earth's crust, causing an eruption. Lava, ash, and gases are expelled during eruptions.",
+                    weight = 25.0,
+                    explanation = "Volcanoes form at plate boundaries due to rising magma and erupt when pressure builds"
+                ),
+                Question(
+                    id = "q11",
+                    text = "Discuss the impact of climate change on our planet.",
+                    type = QuestionType.ESSAY,
+                    options = emptyList(),
+                    answer = "Climate change has significant impacts on Earth. Rising temperatures cause ice caps to melt, leading to sea level rise. Extreme weather events become more frequent. Ecosystems are disrupted as species struggle to adapt. Agricultural patterns change, affecting food security. Addressing climate change requires global cooperation and sustainable practices.",
+                    weight = 30.0,
+                    explanation = "Climate change affects temperature, sea levels, weather patterns, and ecosystems"
+                ),
+                Question(
+                    id = "q12",
+                    text = "Describe the importance of education in society.",
+                    type = QuestionType.ESSAY,
+                    options = emptyList(),
+                    answer = "Education is fundamental to societal progress. It empowers individuals with knowledge and skills necessary for personal and professional growth. Education promotes critical thinking, creativity, and problem-solving abilities. It helps reduce poverty, improves health outcomes, and strengthens democracy. A well-educated population drives innovation and economic development.",
+                    weight = 30.0,
+                    explanation = "Education is essential for individual empowerment and societal development"
                 )
             )
             saveQuestions(sampleQuestions)
             android.util.Log.d("Repository", "Saved ${sampleQuestions.size} demo questions")
+            
+            // Update version after successful initialization
+            prefs.edit().putInt("demo_data_version", DEMO_DATA_VERSION).apply()
+            android.util.Log.d("Repository", "Demo data version updated to $DEMO_DATA_VERSION")
         } else {
-            android.util.Log.d("Repository", "Questions already exist, skipping initialization")
+            android.util.Log.d("Repository", "Questions already exist and version is current, skipping initialization")
         }
         
         val currentStudents = loadStudents()
         android.util.Log.d("Repository", "Current students count: ${currentStudents.size}")
         
-        if (currentStudents.isEmpty()) {
+        if (currentStudents.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
             android.util.Log.d("Repository", "Initializing demo students...")
             // Add sample students
             val sampleStudents = listOf(
@@ -497,146 +574,330 @@ object Repository {
                     id = "s1",
                     name = "Ahmad Rizki",
                     studentNumber = "2024001",
-                    email = "ahmad@student.com",
+                    email = "ahmad.rizki@student.com",
                     classSection = "class1"
                 ),
                 Student(
                     id = "s2",
                     name = "Siti Nurhaliza",
                     studentNumber = "2024002",
-                    email = "siti@student.com",
+                    email = "siti.nur@student.com",
                     classSection = "class1"
                 ),
                 Student(
                     id = "s3",
                     name = "Budi Santoso",
                     studentNumber = "2024003",
-                    email = "budi@student.com",
+                    email = "budi.santoso@student.com",
                     classSection = "class1"
                 ),
                 Student(
                     id = "s4",
                     name = "Dewi Lestari",
                     studentNumber = "2024004",
-                    email = "dewi@student.com",
-                    classSection = "class2"
+                    email = "dewi.lestari@student.com",
+                    classSection = "class1"
                 ),
                 Student(
                     id = "s5",
                     name = "Eko Prasetyo",
                     studentNumber = "2024005",
-                    email = "eko@student.com",
+                    email = "eko.prasetyo@student.com",
                     classSection = "class2"
+                ),
+                Student(
+                    id = "s6",
+                    name = "Rani Wijaya",
+                    studentNumber = "2024006",
+                    email = "rani.wijaya@student.com",
+                    classSection = "class2"
+                ),
+                Student(
+                    id = "s7",
+                    name = "Fajar Nugroho",
+                    studentNumber = "2024007",
+                    email = "fajar.nugroho@student.com",
+                    classSection = "class2"
+                ),
+                Student(
+                    id = "s8",
+                    name = "Maya Putri",
+                    studentNumber = "2024008",
+                    email = "maya.putri@student.com",
+                    classSection = "class3"
+                ),
+                Student(
+                    id = "s9",
+                    name = "Rudi Hartono",
+                    studentNumber = "2024009",
+                    email = "rudi.hartono@student.com",
+                    classSection = "class3"
+                ),
+                Student(
+                    id = "s10",
+                    name = "Linda Susanti",
+                    studentNumber = "2024010",
+                    email = "linda.susanti@student.com",
+                    classSection = "class3"
                 )
             )
             saveStudents(sampleStudents)
             android.util.Log.d("Repository", "Saved ${sampleStudents.size} demo students")
         } else {
-            android.util.Log.d("Repository", "Students already exist, skipping initialization")
+            android.util.Log.d("Repository", "Students already exist and version is current, skipping initialization")
         }
         
         val currentClasses = loadClassSections()
         android.util.Log.d("Repository", "Current classes count: ${currentClasses.size}")
         
-        if (currentClasses.isEmpty()) {
+        if (currentClasses.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
             android.util.Log.d("Repository", "Initializing demo classes...")
             // Add sample classes
             val sampleClasses = listOf(
                 ClassSection(
                     id = "class1",
-                    name = "Class 10A",
-                    description = "Mathematics and Science",
+                    name = "Class 10A - Science",
+                    description = "Mathematics, Physics, Chemistry, and Biology",
+                    teacherId = "teacher1",
+                    studentCount = 4
+                ),
+                ClassSection(
+                    id = "class2",
+                    name = "Class 10B - Social Studies",
+                    description = "History, Geography, Economics, and Sociology",
                     teacherId = "teacher1",
                     studentCount = 3
                 ),
                 ClassSection(
-                    id = "class2",
-                    name = "Class 10B",
-                    description = "Social Studies",
+                    id = "class3",
+                    name = "Class 11A - Advanced Science",
+                    description = "Advanced topics in Science and Mathematics",
                     teacherId = "teacher1",
-                    studentCount = 2
+                    studentCount = 3
                 )
             )
             saveClassSections(sampleClasses)
             android.util.Log.d("Repository", "Saved ${sampleClasses.size} demo classes")
         } else {
-            android.util.Log.d("Repository", "Classes already exist, skipping initialization")
+            android.util.Log.d("Repository", "Classes already exist and version is current, skipping initialization")
         }
         
         val currentScans = loadScans()
         android.util.Log.d("Repository", "Current scans count: ${currentScans.size}")
         
-        if (currentScans.isEmpty()) {
+        if (currentScans.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
             android.util.Log.d("Repository", "Initializing demo scans...")
-            // Add sample scans
+            // Add realistic sample scans with various answer types
             val sampleScans = listOf(
                 ScanRecord(
                     id = "scan1",
                     filePath = "",
-                    recognizedText = "1. Jakarta\n2. 42\n3. 1945\n4. Jupiter\n5. 0",
+                    recognizedText = """MCQ Answers:
+1. Jakarta
+2. Jupiter
+3. Leonardo da Vinci
+4. 100
+
+Short Text:
+5. Photosynthesis is the process where plants use sunlight to make food with chlorophyll
+6. Recycling reduces waste and helps protect our environment
+
+Essay:
+9. The water cycle begins when water evaporates from oceans. The water vapor rises and condenses into clouds. Then it falls back as rain or snow.""",
                     studentId = "s1",
-                    timestamp = System.currentTimeMillis() - 86400000, // 1 day ago
-                    accuracy = 95.5f,
+                    timestamp = System.currentTimeMillis() - 3600000, // 1 hour ago
+                    accuracy = 96.5f,
                     confidenceLevel = "High",
                     enhancedByAI = true
                 ),
                 ScanRecord(
                     id = "scan2",
                     filePath = "",
-                    recognizedText = "1. Jakarta\n2. 43\n3. 1945\n4. Saturn\n5. 0",
+                    recognizedText = """Multiple Choice:
+1. Jakarta
+2. Saturn
+3. Leonardo da Vinci
+4. 100
+
+Short Answers:
+5. Process where plants convert sunlight into energy
+6. Recycling saves resources and reduces pollution
+7. solid, liquid, gas""",
                     studentId = "s2",
-                    timestamp = System.currentTimeMillis() - 172800000, // 2 days ago
-                    accuracy = 88.2f,
+                    timestamp = System.currentTimeMillis() - 86400000, // 1 day ago
+                    accuracy = 91.8f,
                     confidenceLevel = "High",
                     enhancedByAI = true
                 ),
                 ScanRecord(
                     id = "scan3",
                     filePath = "",
-                    recognizedText = "Sample handwritten answers for demo",
+                    recognizedText = """Q1: Jakarta
+Q2: Jupiter
+Q3: Michelangelo
+Q4: 100
+
+Short Text:
+Q7: Solid, liquid, and gas are the three states
+Q8: Solar, wind, and hydroelectric power
+
+Long Answer:
+Volcanoes form at plate boundaries where magma rises. When pressure builds up, the volcano erupts releasing lava and ash.""",
                     studentId = "s3",
-                    timestamp = System.currentTimeMillis() - 259200000, // 3 days ago
-                    accuracy = 92.0f,
+                    timestamp = System.currentTimeMillis() - 172800000, // 2 days ago
+                    accuracy = 93.4f,
                     confidenceLevel = "High",
+                    enhancedByAI = true
+                ),
+                ScanRecord(
+                    id = "scan4",
+                    filePath = "",
+                    recognizedText = """Answers:
+1. Jakarta - capital of Indonesia
+2. Jupiter - largest planet
+3. Leonardo da Vinci
+4. 25 x 4 = 100
+
+Essay on Water Cycle:
+The water cycle is a continuous process that circulates water on Earth. Water evaporates from bodies of water, condenses into clouds, and falls as precipitation.""",
+                    studentId = "s4",
+                    timestamp = System.currentTimeMillis() - 259200000, // 3 days ago
+                    accuracy = 94.2f,
+                    confidenceLevel = "High",
+                    enhancedByAI = true
+                ),
+                ScanRecord(
+                    id = "scan5",
+                    filePath = "",
+                    recognizedText = """MCQ Section:
+1. Jakarta
+2. Jupiter
+3. Leonardo da Vinci
+4. 100
+
+Written Responses:
+Photosynthesis: Plants use sunlight and chlorophyll to produce energy
+Recycling: Helps environment by reducing waste
+Three states: solid, liquid, gas""",
+                    studentId = "s5",
+                    timestamp = System.currentTimeMillis() - 345600000, // 4 days ago
+                    accuracy = 89.7f,
+                    confidenceLevel = "Medium",
                     enhancedByAI = false
+                ),
+                ScanRecord(
+                    id = "scan6",
+                    filePath = "",
+                    recognizedText = """Student Answer Sheet
+
+Multiple Choice Questions:
+1. Jakarta is the capital
+2. Jupiter is largest
+3. Leonardo da Vinci painted Mona Lisa
+4. 100
+
+Essay: Climate change impacts our planet through rising temperatures and extreme weather events. We need sustainable practices to address this global challenge.""",
+                    studentId = "s6",
+                    timestamp = System.currentTimeMillis() - 432000000, // 5 days ago
+                    accuracy = 95.1f,
+                    confidenceLevel = "High",
+                    enhancedByAI = true
                 )
             )
             saveScans(sampleScans)
             android.util.Log.d("Repository", "Saved ${sampleScans.size} demo scans")
         } else {
-            android.util.Log.d("Repository", "Scans already exist, skipping initialization")
+            android.util.Log.d("Repository", "Scans already exist and version is current, skipping initialization")
         }
         
         val currentResults = loadExamResults()
         android.util.Log.d("Repository", "Current results count: ${currentResults.size}")
         
-        if (currentResults.isEmpty()) {
+        if (currentResults.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
             android.util.Log.d("Repository", "Initializing demo results...")
-            // Add sample exam results
+            // Add comprehensive sample exam results
             val sampleResults = listOf(
                 ExamResult(
                     studentId = "s1",
-                    examId = "exam1",
-                    totalScore = 85.0,
-                    details = mapOf("q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0, "q5" to 8.0)
+                    examId = "midterm_2024",
+                    totalScore = 92.0,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 14.0, "q6" to 13.0, "q7" to 10.0, "q8" to 11.0,
+                        "q9" to 18.0
+                    )
                 ),
                 ExamResult(
                     studentId = "s2",
-                    examId = "exam1",
-                    totalScore = 78.0,
-                    details = mapOf("q1" to 10.0, "q2" to 8.0, "q3" to 10.0, "q4" to 7.0, "q5" to 10.0)
+                    examId = "midterm_2024",
+                    totalScore = 85.5,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 8.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 13.0, "q6" to 12.0, "q7" to 9.0, "q8" to 10.0,
+                        "q9" to 17.0
+                    )
                 ),
                 ExamResult(
                     studentId = "s3",
-                    examId = "exam1",
-                    totalScore = 92.0,
-                    details = mapOf("q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0, "q5" to 10.0)
+                    examId = "midterm_2024",
+                    totalScore = 88.0,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 8.0, "q4" to 10.0,
+                        "q5" to 14.0, "q6" to 11.0, "q7" to 10.0, "q8" to 12.0,
+                        "q9" to 16.0
+                    )
+                ),
+                ExamResult(
+                    studentId = "s4",
+                    examId = "midterm_2024",
+                    totalScore = 95.5,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 15.0, "q6" to 15.0, "q7" to 12.0, "q8" to 12.0,
+                        "q9" to 19.0
+                    )
+                ),
+                ExamResult(
+                    studentId = "s5",
+                    examId = "quiz_01",
+                    totalScore = 78.0,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 12.0, "q6" to 11.0, "q7" to 10.0, "q8" to 9.0
+                    )
+                ),
+                ExamResult(
+                    studentId = "s6",
+                    examId = "quiz_01",
+                    totalScore = 91.0,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 15.0, "q6" to 14.0, "q7" to 11.0, "q8" to 12.0
+                    )
+                ),
+                ExamResult(
+                    studentId = "s7",
+                    examId = "quiz_01",
+                    totalScore = 82.5,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 9.0, "q3" to 10.0, "q4" to 10.0,
+                        "q5" to 13.0, "q6" to 12.0, "q7" to 10.0, "q8" to 10.0
+                    )
+                ),
+                ExamResult(
+                    studentId = "s8",
+                    examId = "final_2024",
+                    totalScore = 89.0,
+                    details = mapOf(
+                        "q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0,
+                        "q9" to 18.0, "q10" to 22.0, "q11" to 27.0
+                    )
                 )
             )
             sampleResults.forEach { saveExamResult(it) }
             android.util.Log.d("Repository", "Saved ${sampleResults.size} demo results")
         } else {
-            android.util.Log.d("Repository", "Results already exist, skipping initialization")
+            android.util.Log.d("Repository", "Results already exist and version is current, skipping initialization")
         }
         
         android.util.Log.d("Repository", "Demo data initialization completed successfully")

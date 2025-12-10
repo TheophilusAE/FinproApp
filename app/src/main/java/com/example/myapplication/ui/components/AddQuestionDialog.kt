@@ -76,8 +76,55 @@ fun AddQuestionDialog(
 
 @Composable
 private fun RowTypeSelector(typeState: QuestionType, onTypeChange: (QuestionType) -> Unit) {
-    androidx.compose.foundation.layout.Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
-        Button(onClick = { onTypeChange(QuestionType.MCQ) }, modifier = Modifier.weight(1f)) { Text("MCQ") }
-        Button(onClick = { onTypeChange(QuestionType.ESSAY) }, modifier = Modifier.weight(1f)) { Text("Essay") }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text("Question Type:", style = androidx.compose.material3.MaterialTheme.typography.labelMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth(), 
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { onTypeChange(QuestionType.MCQ) },
+                modifier = Modifier.weight(1f),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (typeState == QuestionType.MCQ) 
+                        androidx.compose.material3.MaterialTheme.colorScheme.primary 
+                    else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) { Text("MCQ") }
+            Button(
+                onClick = { onTypeChange(QuestionType.SHORT_TEXT) },
+                modifier = Modifier.weight(1f),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (typeState == QuestionType.SHORT_TEXT) 
+                        androidx.compose.material3.MaterialTheme.colorScheme.primary 
+                    else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) { Text("Short") }
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth(), 
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                onClick = { onTypeChange(QuestionType.LONG_TEXT) },
+                modifier = Modifier.weight(1f),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (typeState == QuestionType.LONG_TEXT) 
+                        androidx.compose.material3.MaterialTheme.colorScheme.primary 
+                    else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) { Text("Long") }
+            Button(
+                onClick = { onTypeChange(QuestionType.ESSAY) },
+                modifier = Modifier.weight(1f),
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = if (typeState == QuestionType.ESSAY) 
+                        androidx.compose.material3.MaterialTheme.colorScheme.primary 
+                    else androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) { Text("Essay") }
+        }
     }
 }

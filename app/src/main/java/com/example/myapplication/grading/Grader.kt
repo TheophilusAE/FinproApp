@@ -8,7 +8,8 @@ object Grader {
     /**
      * Grade answers given a list of questions and a map of questionId -> studentAnswer
      * MCQ: exact match (case-insensitive) -> full points if equal
-     * Essay: compute simple text similarity (cosine over token frequencies) and scale to weight
+     * SHORT_TEXT: keyword matching + similarity (more flexible)
+     * LONG_TEXT/ESSAY: compute text similarity (cosine over token frequencies) and scale to weight
      */
     fun grade(questions: List<Question>, answers: Map<String, String>, studentId: String, examId: String): ExamResult {
         val details = mutableMapOf<String, Double>()
@@ -20,6 +21,14 @@ object Grader {
                 com.example.myapplication.data.QuestionType.MCQ -> {
                     if (studentAns.trim().equals(q.answer.trim(), ignoreCase = true)) q.weight else 0.0
                 }
+                com.example.myapplication.data.QuestionType.SHORT_TEXT -> {
+                    // For short text, use keyword matching and partial credit
+                    val sim = similarity(studentAns, q.answer)
+                    // Give more generous scoring for short answers (min 40% if any keywords match)
+                    val adjustedSim = if (sim > 0.3) sim.coerceAtLeast(0.4) else sim
+                    adjustedSim * q.weight
+                }
+                com.example.myapplication.data.QuestionType.LONG_TEXT,
                 com.example.myapplication.data.QuestionType.ESSAY -> {
                     val sim = similarity(studentAns, q.answer)
                     sim * q.weight
