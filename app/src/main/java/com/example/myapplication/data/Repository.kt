@@ -219,6 +219,23 @@ object Repository {
             out
         } catch (e: Exception) { emptyList() }
     }
+    
+    fun deleteExamResult(studentId: String, examId: String) {
+        val list = loadExamResults().toMutableList()
+        list.removeAll { it.studentId == studentId && it.examId == examId }
+        val arr = org.json.JSONArray()
+        list.forEach { r ->
+            val o = org.json.JSONObject()
+            o.put("studentId", r.studentId)
+            o.put("examId", r.examId)
+            o.put("totalScore", r.totalScore)
+            val details = org.json.JSONObject()
+            r.details.forEach { (k, v) -> details.put(k, v) }
+            o.put("details", details)
+            arr.put(o)
+        }
+        resultsFile().writeText(arr.toString(2))
+    }
 
     // Student Management
     fun saveStudents(list: List<Student>) {

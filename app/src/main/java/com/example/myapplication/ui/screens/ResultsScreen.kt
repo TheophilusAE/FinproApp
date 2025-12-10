@@ -26,6 +26,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Surface
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.TrendingUp
@@ -34,6 +36,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -57,6 +60,7 @@ fun ResultsScreen(navController: NavController) {
     var filteredResults by remember { mutableStateOf<List<ExamResult>>(emptyList()) }
     var selectedExamId by remember { mutableStateOf<String?>(null) }
     var showFilters by remember { mutableStateOf(false) }
+    var deleteConfirmResult by remember { mutableStateOf<ExamResult?>(null) }
 
     LaunchedEffect(Unit) {
         allResults.clear()
@@ -88,9 +92,9 @@ fun ResultsScreen(navController: NavController) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = MaterialTheme.colorScheme.primary,
-            shadowElevation = 4.dp
+            shadowElevation = 8.dp
         ) {
-            Column(modifier = Modifier.padding(12.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -103,20 +107,23 @@ fun ResultsScreen(navController: NavController) {
                             Icon(
                                 imageVector = Icons.Default.ArrowBack,
                                 contentDescription = "Back",
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onPrimary,
+                                modifier = Modifier.size(28.dp)
                             )
                         }
-                        Column(modifier = Modifier.padding(start = 8.dp)) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
                             Text(
                                 text = "Grading Results",
                                 style = MaterialTheme.typography.headlineMedium,
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 fontWeight = FontWeight.Bold
                             )
+                            Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "${filteredResults.size} exam${if (filteredResults.size != 1) "s" else ""}",
+                                text = "${filteredResults.size} exam${if (filteredResults.size != 1) "s" else ""} • View statistics",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.95f)
                             )
                         }
                     }
@@ -262,7 +269,10 @@ fun ResultsScreen(navController: NavController) {
             }
 
             items(filteredResults) { r ->
-                ResultCard(result = r)
+                ResultCard(
+                    result = r,
+                    onDelete = { deleteConfirmResult = r }
+                )
             }
             
             // Empty state
@@ -298,6 +308,41 @@ fun ResultsScreen(navController: NavController) {
                 }
             }
         }
+    }
+    
+    // Delete confirmation dialog
+    deleteConfirmResult?.let { result ->
+        AlertDialog(
+            onDismissRequest = { deleteConfirmResult = null },
+            title = { Text("Delete Result?") },
+            text = { 
+                Text("Are you sure you want to delete the result for student ${result.studentId} in exam ${result.examId}? This action cannot be undone.") 
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        Repository.deleteExamResult(result.studentId, result.examId)
+                        allResults.removeAll { it.studentId == result.studentId && it.examId == result.examId }
+                        filteredResults = if (selectedExamId == null) {
+                            allResults.toList()
+                        } else {
+                            allResults.filter { it.examId == selectedExamId }
+                        }
+                        deleteConfirmResult = null
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteConfirmResult = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -399,7 +444,10 @@ private fun ScoreDistributionCard(results: List<ExamResult>) {
 }
 
 @Composable
-private fun ResultCard(result: ExamResult) {
+private fun ResultCard(
+    result: ExamResult,
+    onDelete: () -> Unit
+) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.elevatedCardColors(
@@ -469,6 +517,14 @@ private fun ResultCard(result: ExamResult) {
                         }.copy(alpha = 0.7f)
                     )
                 }
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.Delete,
+                    contentDescription = "Delete Result",
+                    tint = MaterialTheme.colorScheme.error
+                )
             }
         }
     }

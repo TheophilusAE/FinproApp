@@ -150,19 +150,20 @@ fun LoginScreen(
                 color = Color.White.copy(alpha = 0.95f)
             )
 
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Login Card with glassmorphism
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 12.dp),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 16.dp),
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = Color.White.copy(alpha = 0.98f)
-                )
+                ),
+                shape = MaterialTheme.shapes.extraLarge
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    modifier = Modifier.padding(horizontal = 28.dp, vertical = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     // Email Field
                     OutlinedTextField(
@@ -223,7 +224,7 @@ fun LoginScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     // Login Button
                     Button(
@@ -251,16 +252,26 @@ fun LoginScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
-                        enabled = !isLoading
+                            .height(56.dp),
+                        enabled = !isLoading,
+                        shape = MaterialTheme.shapes.large,
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 8.dp
+                        )
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(24.dp),
-                                color = MaterialTheme.colorScheme.onPrimary
+                                modifier = Modifier.size(28.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 3.dp
                             )
                         } else {
-                            Text("Sign In", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Sign In",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
 

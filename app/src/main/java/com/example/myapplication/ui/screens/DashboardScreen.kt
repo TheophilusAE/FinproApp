@@ -88,7 +88,14 @@ fun DashboardScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.surface,
+                        MaterialTheme.colorScheme.background
+                    )
+                )
+            )
     ) {
         // Hero header with animated gradient
         Column(
@@ -103,7 +110,7 @@ fun DashboardScreen(navController: NavController) {
                         )
                     )
                 )
-                .padding(24.dp)
+                .padding(horizontal = 20.dp, vertical = 28.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -161,10 +168,10 @@ fun DashboardScreen(navController: NavController) {
             )
             
             // Quick Stats
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 StatCard(
                     label = "Questions",
@@ -185,9 +192,11 @@ fun DashboardScreen(navController: NavController) {
         }
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp)
         ) {
             items(features.size) { index ->
                 val feature = features[index]
@@ -220,7 +229,7 @@ fun DashboardScreen(navController: NavController) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .scale(scale)
-                            .shadow(elevation, shape = MaterialTheme.shapes.medium)
+                            .shadow(elevation, shape = MaterialTheme.shapes.large)
                             .clickable {
                                 when (feature.first) {
                                     "Scan Answers" -> navController.navigate("scan")
@@ -235,12 +244,13 @@ fun DashboardScreen(navController: NavController) {
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = elevation),
                         colors = CardDefaults.elevatedCardColors(
                             containerColor = MaterialTheme.colorScheme.surface
-                        )
+                        ),
+                        shape = MaterialTheme.shapes.large
                     ) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(horizontal = 20.dp, vertical = 18.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -249,7 +259,7 @@ fun DashboardScreen(navController: NavController) {
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Card(
-                                    modifier = Modifier.size(56.dp),
+                                    modifier = Modifier.size(60.dp),
                                     colors = CardDefaults.cardColors(
                                         containerColor = if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
                                             MaterialTheme.colorScheme.tertiaryContainer
@@ -257,14 +267,15 @@ fun DashboardScreen(navController: NavController) {
                                             MaterialTheme.colorScheme.primaryContainer
                                         }
                                     ),
-                                    shape = MaterialTheme.shapes.medium
+                                    shape = MaterialTheme.shapes.large,
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                                 ) {
                                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                                         Icon(
                                             imageVector = feature.third,
                                             contentDescription = feature.first,
                                             modifier = Modifier
-                                                .size(28.dp),
+                                                .size(32.dp),
                                             tint = if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
                                                 MaterialTheme.colorScheme.tertiary
                                             } else {
@@ -273,49 +284,50 @@ fun DashboardScreen(navController: NavController) {
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(16.dp))
+                                Spacer(modifier = Modifier.width(18.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
                                             text = feature.first,
-                                            style = MaterialTheme.typography.titleMedium,
+                                            style = MaterialTheme.typography.titleLarge,
                                             color = MaterialTheme.colorScheme.onSurface,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                         if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
                                             Spacer(modifier = Modifier.width(8.dp))
                                             Card(
                                                 colors = CardDefaults.cardColors(
-                                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.2f)
+                                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.25f)
                                                 ),
-                                                modifier = Modifier
+                                                modifier = Modifier,
+                                                shape = MaterialTheme.shapes.small
                                             ) {
                                                 Row(
-                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Icon(
                                                         imageVector = androidx.compose.material.icons.Icons.Default.AutoAwesome,
                                                         contentDescription = null,
                                                         tint = Color(0xFFFFB300),
-                                                        modifier = Modifier.size(12.dp)
+                                                        modifier = Modifier.size(14.dp)
                                                     )
-                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Spacer(modifier = Modifier.width(4.dp))
                                                     Text(
                                                         text = "AI",
-                                                        style = MaterialTheme.typography.labelSmall,
+                                                        style = MaterialTheme.typography.labelMedium,
                                                         color = Color(0xFFFFB300),
-                                                        fontWeight = FontWeight.ExtraBold
+                                                        fontWeight = FontWeight.Bold
                                                     )
                                                 }
                                             }
                                         }
                                     }
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     Text(
                                         text = feature.second,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
                                         maxLines = 2
                                     )
                                 }
@@ -323,8 +335,8 @@ fun DashboardScreen(navController: NavController) {
                             Icon(
                                 imageVector = androidx.compose.material.icons.Icons.Default.ArrowForward,
                                 contentDescription = "Go",
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp)
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                                modifier = Modifier.size(28.dp)
                             )
                         }
                     }
