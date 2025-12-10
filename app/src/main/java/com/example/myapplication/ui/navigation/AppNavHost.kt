@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Brightness4
 import androidx.compose.material.icons.filled.Brightness7
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -119,6 +120,19 @@ fun AppNavHost(
                         DropdownMenuItem(
                             text = {
                                 Row {
+                                    Icon(androidx.compose.material.icons.Icons.Default.Settings, contentDescription = "Settings")
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Settings")
+                                }
+                            },
+                            onClick = {
+                                showUserMenu = false
+                                navController.navigate("settings")
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Row {
                                     Icon(Icons.Default.Logout, contentDescription = "Logout")
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text("Logout")
@@ -200,6 +214,12 @@ fun AppNavHost(
                 ClassManagementScreen(
                     repository = Repository,
                     teacherId = userSession.userId,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("settings") {
+                com.example.myapplication.ui.screens.SettingsScreen(
+                    navController = navController,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

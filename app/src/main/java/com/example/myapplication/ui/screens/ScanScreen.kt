@@ -50,6 +50,8 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
     val scope = rememberCoroutineScope()
 
     var recognizedText by remember { mutableStateOf<String?>(null) }
+    var scanAccuracy by remember { mutableStateOf<Float?>(null) }
+    var confidenceLevel by remember { mutableStateOf("Medium") }
     var isProcessing by remember { mutableStateOf(false) }
     var captureSuccess by remember { mutableStateOf(false) }
     var isCapturing by remember { mutableStateOf(false) }
@@ -107,19 +109,24 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
             
             scope.launch(Dispatchers.IO) {
                 try {
-                    val text = TextRecognitionHelper.recognizeImage(context, it)
+                    val result = TextRecognitionHelper.recognizeImage(context, it)
                     
                     Repository.saveScan(
                         com.example.myapplication.data.ScanRecord(
                             id = java.util.UUID.randomUUID().toString(),
                             filePath = it.toString(),
-                            recognizedText = text,
-                            timestamp = System.currentTimeMillis()
+                            recognizedText = result.text,
+                            timestamp = System.currentTimeMillis(),
+                            accuracy = result.accuracy,
+                            confidenceLevel = result.confidenceLevel,
+                            enhancedByAI = false
                         )
                     )
                     
                     withContext(Dispatchers.Main) {
-                        recognizedText = text
+                        recognizedText = result.text
+                        scanAccuracy = result.accuracy
+                        confidenceLevel = result.confidenceLevel
                         captureSuccess = true
                         isProcessing = false
                     }
@@ -326,7 +333,7 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
                                         
                                         scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                                             try {
-                                                val text =
+                                                val result =
                                                     TextRecognitionHelper.recognizeImage(
                                                         context,
                                                         uri
@@ -336,13 +343,18 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
                                                     com.example.myapplication.data.ScanRecord(
                                                         id = id,
                                                         filePath = file.absolutePath,
-                                                        recognizedText = text,
-                                                        timestamp = System.currentTimeMillis()
+                                                        recognizedText = result.text,
+                                                        timestamp = System.currentTimeMillis(),
+                                                        accuracy = result.accuracy,
+                                                        confidenceLevel = result.confidenceLevel,
+                                                        enhancedByAI = false
                                                     )
                                                 )
                                                 
                                                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                                    recognizedText = text
+                                                    recognizedText = result.text
+                                                    scanAccuracy = result.accuracy
+                                                    confidenceLevel = result.confidenceLevel
                                                     captureSuccess = true
                                                     isProcessing = false
                                                 }
@@ -644,12 +656,50 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = "Recognized Text",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    IconButton(onClick = { recognizedText = null }) {
+                                    Column {
+                                        Text(
+                                            text = "Recognized Text",
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        if (scanAccuracy != null) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.padding(top = 4.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = when (confidenceLevel) {
+                                                        "High" -> Icons.Default.VerifiedUser
+                                                        "Medium" -> Icons.Default.CheckCircle
+                                                        else -> Icons.Default.Warning
+                                                    },
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = when (confidenceLevel) {
+                                                        "High" -> Color(0xFF4CAF50)
+                                                        "Medium" -> Color(0xFFFFA726)
+                                                        else -> Color(0xFFF44336)
+                                                    }
+                                                )
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Text(
+                                                    text = "$confidenceLevel Confidence • ${String.format("%.1f%%", scanAccuracy)} Accuracy",
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    color = when (confidenceLevel) {
+                                                        "High" -> Color(0xFF4CAF50)
+                                                        "Medium" -> Color(0xFFFFA726)
+                                                        else -> Color(0xFFF44336)
+                                                    },
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                        }
+                                    }
+                                    IconButton(onClick = { 
+                                        recognizedText = null
+                                        scanAccuracy = null
+                                        confidenceLevel = "Medium"
+                                    }) {
                                         Icon(
                                             Icons.Default.Clear,
                                             contentDescription = "Close",
@@ -659,6 +709,75 @@ fun ScanScreen(navController: NavController, cameraPermissionGranted: Boolean) {
                                 }
                                 
                                 Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Accuracy indicator card (if available)
+                                if (scanAccuracy != null) {
+                                    Card(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = when (confidenceLevel) {
+                                                "High" -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+                                                "Medium" -> Color(0xFFFFA726).copy(alpha = 0.1f)
+                                                else -> Color(0xFFF44336).copy(alpha = 0.1f)
+                                            }
+                                        )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(12.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "Scan Quality",
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                                )
+                                                Text(
+                                                    text = when (confidenceLevel) {
+                                                        "High" -> "Excellent recognition"
+                                                        "Medium" -> "Good recognition"
+                                                        else -> "Consider rescanning"
+                                                    },
+                                                    style = MaterialTheme.typography.bodyMedium,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                            
+                                            // Circular progress indicator
+                                            Box(
+                                                contentAlignment = Alignment.Center,
+                                                modifier = Modifier.size(56.dp)
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    progress = (scanAccuracy!! / 100f).coerceIn(0f, 1f),
+                                                    modifier = Modifier.size(56.dp),
+                                                    strokeWidth = 5.dp,
+                                                    color = when (confidenceLevel) {
+                                                        "High" -> Color(0xFF4CAF50)
+                                                        "Medium" -> Color(0xFFFFA726)
+                                                        else -> Color(0xFFF44336)
+                                                    },
+                                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                                                )
+                                                Text(
+                                                    text = "${scanAccuracy!!.toInt()}%",
+                                                    style = MaterialTheme.typography.labelLarge,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = when (confidenceLevel) {
+                                                        "High" -> Color(0xFF4CAF50)
+                                                        "Medium" -> Color(0xFFFFA726)
+                                                        else -> Color(0xFFF44336)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                                 
                                 // Scrollable text content
                                 Text(

@@ -10,6 +10,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -45,6 +46,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PhotoCamera
@@ -55,7 +57,9 @@ import androidx.compose.material.icons.filled.Grade
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Class
+import androidx.compose.material.icons.filled.AutoAwesome
 import com.example.myapplication.data.Repository
+import com.example.myapplication.ai.GeminiService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +67,7 @@ fun DashboardScreen(navController: NavController) {
     var questionCount by remember { mutableStateOf(0) }
     var scanCount by remember { mutableStateOf(0) }
     var resultCount by remember { mutableStateOf(0) }
+    val hasAI by remember { mutableStateOf(GeminiService.hasApiKey()) }
     
     LaunchedEffect(Unit) {
         questionCount = Repository.loadQuestions().size
@@ -72,7 +77,7 @@ fun DashboardScreen(navController: NavController) {
     
     val features = listOf(
         Triple("Scan Answers", "Quickly capture and recognize answer sheets", Icons.Default.PhotoCamera),
-        Triple("Grade Exam", "Automatically grade scanned answer sheets", Icons.Default.Grade),
+        Triple("Grade Exam", if (hasAI) "AI-powered grading with enhanced accuracy" else "Automatically grade scanned answer sheets", Icons.Default.Grade),
         Triple("Scan History", "View and manage all captured scans", Icons.Default.History),
         Triple("Question Bank", "Create and manage questions & keys", Icons.Default.ListAlt),
         Triple("Results", "View grading results and statistics", Icons.Default.Assessment),
@@ -85,34 +90,78 @@ fun DashboardScreen(navController: NavController) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Hero header with gradient
+        // Hero header with animated gradient
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.verticalGradient(
+                    Brush.linearGradient(
                         colors = listOf(
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
+                            MaterialTheme.colorScheme.tertiary,
+                            MaterialTheme.colorScheme.secondary
                         )
                     )
                 )
                 .padding(24.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Card(
+                    modifier = Modifier.size(64.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.95f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "📝",
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                    }
+                }
+                Column {
+                    Text(
+                        text = "AI Exam Grader",
+                        style = MaterialTheme.typography.displaySmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+                    if (hasAI) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = Color(0xFFFFD700),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "AI-Powered • Enhanced Accuracy",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color(0xFFFFD700),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "AI Exam Grader",
-                style = MaterialTheme.typography.displayLarge,
-                color = MaterialTheme.colorScheme.onPrimary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Fast scanning, automatic grading and useful reports.",
+                text = "Smart grading with handwriting recognition",
                 style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                fontWeight = FontWeight.Medium,
+                color = Color.White.copy(alpha = 0.95f)
             )
             
             // Quick Stats
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -202,32 +251,72 @@ fun DashboardScreen(navController: NavController) {
                                 Card(
                                     modifier = Modifier.size(56.dp),
                                     colors = CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                                        containerColor = if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
+                                            MaterialTheme.colorScheme.tertiaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        }
                                     ),
                                     shape = MaterialTheme.shapes.medium
                                 ) {
-                                    Icon(
-                                        imageVector = feature.third,
-                                        contentDescription = feature.first,
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .padding(14.dp),
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
+                                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = feature.third,
+                                            contentDescription = feature.first,
+                                            modifier = Modifier
+                                                .size(28.dp),
+                                            tint = if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
+                                                MaterialTheme.colorScheme.tertiary
+                                            } else {
+                                                MaterialTheme.colorScheme.primary
+                                            }
+                                        )
+                                    }
                                 }
                                 Spacer(modifier = Modifier.width(16.dp))
-                                Column {
-                                    Text(
-                                        text = feature.first,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = feature.first,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        if (hasAI && (feature.first == "Grade Exam" || feature.first == "Scan Answers")) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Card(
+                                                colors = CardDefaults.cardColors(
+                                                    containerColor = Color(0xFFFFD700).copy(alpha = 0.2f)
+                                                ),
+                                                modifier = Modifier
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = androidx.compose.material.icons.Icons.Default.AutoAwesome,
+                                                        contentDescription = null,
+                                                        tint = Color(0xFFFFB300),
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(3.dp))
+                                                    Text(
+                                                        text = "AI",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = Color(0xFFFFB300),
+                                                        fontWeight = FontWeight.ExtraBold
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
                                         text = feature.second,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                                        maxLines = 2
                                     )
                                 }
                             }
@@ -258,25 +347,27 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
     Card(
         modifier = modifier,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)
-        )
+            containerColor = Color.White.copy(alpha = 0.25f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.displaySmall,
+                color = Color.White,
+                fontWeight = FontWeight.ExtraBold
             )
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.9f)
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White.copy(alpha = 0.95f)
             )
         }
     }

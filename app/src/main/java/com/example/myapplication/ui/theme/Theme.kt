@@ -12,25 +12,57 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = PrimaryDark,
+    primary = PrimaryDarkTheme,
+    primaryContainer = PrimaryContainer,
     onPrimary = OnPrimaryDark,
-    secondary = SecondaryDark,
-    tertiary = TertiaryDark,
-    background = BackgroundDark,
-    surface = SurfaceDark,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = SecondaryDarkTheme,
+    secondaryContainer = SecondaryContainer,
+    onSecondary = OnSecondary,
+    onSecondaryContainer = OnSecondaryContainer,
+    tertiary = TertiaryDarkTheme,
+    tertiaryContainer = TertiaryContainer,
+    onTertiary = OnTertiary,
+    onTertiaryContainer = OnTertiaryContainer,
+    background = BackgroundDarkTheme,
     onBackground = OnSurfaceDark,
-    onSurface = OnSurfaceDark
+    surface = SurfaceDark,
+    surfaceVariant = SurfaceContainerHigh,
+    onSurface = OnSurfaceDark,
+    onSurfaceVariant = OnSurfaceVariant,
+    error = ErrorLight,
+    onError = OnError,
+    outline = Outline,
+    outlineVariant = OutlineVariant
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Primary,
+    primaryContainer = PrimaryContainer,
     onPrimary = OnPrimary,
+    onPrimaryContainer = OnPrimaryContainer,
     secondary = Secondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondary = OnSecondary,
+    onSecondaryContainer = OnSecondaryContainer,
     tertiary = Tertiary,
+    tertiaryContainer = TertiaryContainer,
+    onTertiary = OnTertiary,
+    onTertiaryContainer = OnTertiaryContainer,
     background = Background,
+    onBackground = OnBackground,
     surface = Surface,
-    onBackground = OnSurface,
-    onSurface = OnSurface
+    surfaceVariant = SurfaceVariant,
+    surfaceTint = SurfaceTint,
+    onSurface = OnSurface,
+    onSurfaceVariant = OnSurfaceVariant,
+    error = Error,
+    errorContainer = ErrorContainer,
+    onError = OnError,
+    onErrorContainer = OnError,
+    outline = Outline,
+    outlineVariant = OutlineVariant,
+    scrim = Scrim
 )
 
 @Composable

@@ -74,11 +74,11 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:1.2.3")
     implementation("androidx.camera:camera-view:1.2.3")
 
-    // ML Kit Text Recognition (on-device)
-    implementation("com.google.mlkit:text-recognition:16.0.0")
+    // ML Kit Text Recognition V2 (on-device) - Better handwriting support
+    implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     
-    // ML Kit Digital Ink Recognition for handwriting (better accuracy)
-    implementation("com.google.mlkit:digital-ink-recognition:18.1.0")
+    // Google Generative AI (Gemini) for OCR correction and grading
+    implementation("com.google.ai.client.generativeai:generativeai:0.1.2")
 
     // Kotlinx serialization for simple JSON persistence
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")

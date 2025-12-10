@@ -144,6 +144,9 @@ object Repository {
             o.put("recognizedText", r.recognizedText)
             o.put("studentId", r.studentId)
             o.put("timestamp", r.timestamp)
+            o.put("accuracy", r.accuracy)
+            o.put("confidenceLevel", r.confidenceLevel)
+            o.put("enhancedByAI", r.enhancedByAI)
             arr.put(o)
         }
         scansFile().writeText(arr.toString(2))
@@ -162,7 +165,10 @@ object Repository {
                     filePath = o.optString("filePath"),
                     recognizedText = o.optString("recognizedText"),
                     studentId = o.optString("studentId").ifEmpty { null },
-                    timestamp = o.optLong("timestamp", System.currentTimeMillis())
+                    timestamp = o.optLong("timestamp", System.currentTimeMillis()),
+                    accuracy = if (o.has("accuracy") && !o.isNull("accuracy")) o.getDouble("accuracy").toFloat() else null,
+                    confidenceLevel = o.optString("confidenceLevel", "Medium"),
+                    enhancedByAI = o.optBoolean("enhancedByAI", false)
                 ))
             }
             out
@@ -415,5 +421,228 @@ object Repository {
 
     fun getTemplateByExamId(examId: String): AnswerKeyTemplate? {
         return loadAnswerKeyTemplates().firstOrNull { it.examId == examId }
+    }
+    
+    // Initialize demo data for first-time users
+    fun initializeDemoData(context: Context) {
+        try {
+            // Only initialize if data doesn't exist
+            val currentQuestions = loadQuestions()
+            android.util.Log.d("Repository", "Current questions count: ${currentQuestions.size}")
+            
+            if (currentQuestions.isEmpty()) {
+                android.util.Log.d("Repository", "Initializing demo questions...")
+                // Add sample questions
+            val sampleQuestions = listOf(
+                Question(
+                    id = "q1",
+                    text = "What is the capital of Indonesia?",
+                    type = QuestionType.MCQ,
+                    options = listOf("Jakarta", "Bandung", "Surabaya", "Medan"),
+                    answer = "Jakarta",
+                    weight = 10.0,
+                    explanation = "Jakarta is the capital and largest city of Indonesia"
+                ),
+                Question(
+                    id = "q2",
+                    text = "What is 15 + 27?",
+                    type = QuestionType.MCQ,
+                    options = emptyList(),
+                    answer = "42",
+                    weight = 10.0,
+                    explanation = "15 + 27 = 42"
+                ),
+                Question(
+                    id = "q3",
+                    text = "Indonesia gained independence in which year?",
+                    type = QuestionType.MCQ,
+                    options = emptyList(),
+                    answer = "1945",
+                    weight = 10.0,
+                    explanation = "Indonesia proclaimed its independence on August 17, 1945"
+                ),
+                Question(
+                    id = "q4",
+                    text = "What is the largest planet in our solar system?",
+                    type = QuestionType.MCQ,
+                    options = listOf("Earth", "Jupiter", "Saturn", "Mars"),
+                    answer = "Jupiter",
+                    weight = 10.0,
+                    explanation = "Jupiter is the largest planet"
+                ),
+                Question(
+                    id = "q5",
+                    text = "Water freezes at what temperature in Celsius?",
+                    type = QuestionType.MCQ,
+                    options = emptyList(),
+                    answer = "0",
+                    weight = 10.0,
+                    explanation = "Water freezes at 0°C (32°F)"
+                )
+            )
+            saveQuestions(sampleQuestions)
+            android.util.Log.d("Repository", "Saved ${sampleQuestions.size} demo questions")
+        } else {
+            android.util.Log.d("Repository", "Questions already exist, skipping initialization")
+        }
+        
+        val currentStudents = loadStudents()
+        android.util.Log.d("Repository", "Current students count: ${currentStudents.size}")
+        
+        if (currentStudents.isEmpty()) {
+            android.util.Log.d("Repository", "Initializing demo students...")
+            // Add sample students
+            val sampleStudents = listOf(
+                Student(
+                    id = "s1",
+                    name = "Ahmad Rizki",
+                    studentNumber = "2024001",
+                    email = "ahmad@student.com",
+                    classSection = "class1"
+                ),
+                Student(
+                    id = "s2",
+                    name = "Siti Nurhaliza",
+                    studentNumber = "2024002",
+                    email = "siti@student.com",
+                    classSection = "class1"
+                ),
+                Student(
+                    id = "s3",
+                    name = "Budi Santoso",
+                    studentNumber = "2024003",
+                    email = "budi@student.com",
+                    classSection = "class1"
+                ),
+                Student(
+                    id = "s4",
+                    name = "Dewi Lestari",
+                    studentNumber = "2024004",
+                    email = "dewi@student.com",
+                    classSection = "class2"
+                ),
+                Student(
+                    id = "s5",
+                    name = "Eko Prasetyo",
+                    studentNumber = "2024005",
+                    email = "eko@student.com",
+                    classSection = "class2"
+                )
+            )
+            saveStudents(sampleStudents)
+            android.util.Log.d("Repository", "Saved ${sampleStudents.size} demo students")
+        } else {
+            android.util.Log.d("Repository", "Students already exist, skipping initialization")
+        }
+        
+        val currentClasses = loadClassSections()
+        android.util.Log.d("Repository", "Current classes count: ${currentClasses.size}")
+        
+        if (currentClasses.isEmpty()) {
+            android.util.Log.d("Repository", "Initializing demo classes...")
+            // Add sample classes
+            val sampleClasses = listOf(
+                ClassSection(
+                    id = "class1",
+                    name = "Class 10A",
+                    description = "Mathematics and Science",
+                    teacherId = "teacher1",
+                    studentCount = 3
+                ),
+                ClassSection(
+                    id = "class2",
+                    name = "Class 10B",
+                    description = "Social Studies",
+                    teacherId = "teacher1",
+                    studentCount = 2
+                )
+            )
+            saveClassSections(sampleClasses)
+            android.util.Log.d("Repository", "Saved ${sampleClasses.size} demo classes")
+        } else {
+            android.util.Log.d("Repository", "Classes already exist, skipping initialization")
+        }
+        
+        val currentScans = loadScans()
+        android.util.Log.d("Repository", "Current scans count: ${currentScans.size}")
+        
+        if (currentScans.isEmpty()) {
+            android.util.Log.d("Repository", "Initializing demo scans...")
+            // Add sample scans
+            val sampleScans = listOf(
+                ScanRecord(
+                    id = "scan1",
+                    filePath = "",
+                    recognizedText = "1. Jakarta\n2. 42\n3. 1945\n4. Jupiter\n5. 0",
+                    studentId = "s1",
+                    timestamp = System.currentTimeMillis() - 86400000, // 1 day ago
+                    accuracy = 95.5f,
+                    confidenceLevel = "High",
+                    enhancedByAI = true
+                ),
+                ScanRecord(
+                    id = "scan2",
+                    filePath = "",
+                    recognizedText = "1. Jakarta\n2. 43\n3. 1945\n4. Saturn\n5. 0",
+                    studentId = "s2",
+                    timestamp = System.currentTimeMillis() - 172800000, // 2 days ago
+                    accuracy = 88.2f,
+                    confidenceLevel = "High",
+                    enhancedByAI = true
+                ),
+                ScanRecord(
+                    id = "scan3",
+                    filePath = "",
+                    recognizedText = "Sample handwritten answers for demo",
+                    studentId = "s3",
+                    timestamp = System.currentTimeMillis() - 259200000, // 3 days ago
+                    accuracy = 92.0f,
+                    confidenceLevel = "High",
+                    enhancedByAI = false
+                )
+            )
+            saveScans(sampleScans)
+            android.util.Log.d("Repository", "Saved ${sampleScans.size} demo scans")
+        } else {
+            android.util.Log.d("Repository", "Scans already exist, skipping initialization")
+        }
+        
+        val currentResults = loadExamResults()
+        android.util.Log.d("Repository", "Current results count: ${currentResults.size}")
+        
+        if (currentResults.isEmpty()) {
+            android.util.Log.d("Repository", "Initializing demo results...")
+            // Add sample exam results
+            val sampleResults = listOf(
+                ExamResult(
+                    studentId = "s1",
+                    examId = "exam1",
+                    totalScore = 85.0,
+                    details = mapOf("q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0, "q5" to 8.0)
+                ),
+                ExamResult(
+                    studentId = "s2",
+                    examId = "exam1",
+                    totalScore = 78.0,
+                    details = mapOf("q1" to 10.0, "q2" to 8.0, "q3" to 10.0, "q4" to 7.0, "q5" to 10.0)
+                ),
+                ExamResult(
+                    studentId = "s3",
+                    examId = "exam1",
+                    totalScore = 92.0,
+                    details = mapOf("q1" to 10.0, "q2" to 10.0, "q3" to 10.0, "q4" to 10.0, "q5" to 10.0)
+                )
+            )
+            sampleResults.forEach { saveExamResult(it) }
+            android.util.Log.d("Repository", "Saved ${sampleResults.size} demo results")
+        } else {
+            android.util.Log.d("Repository", "Results already exist, skipping initialization")
+        }
+        
+        android.util.Log.d("Repository", "Demo data initialization completed successfully")
+        
+        } catch (e: Exception) {
+            android.util.Log.e("Repository", "Error initializing demo data", e)
+        }
     }
 }

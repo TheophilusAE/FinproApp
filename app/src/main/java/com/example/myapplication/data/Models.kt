@@ -24,5 +24,8 @@ data class ScanRecord(
     val filePath: String,
     val recognizedText: String,
     val studentId: String? = null,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val accuracy: Float? = null, // OCR accuracy percentage (0-100)
+    val confidenceLevel: String = "Medium", // Low, Medium, High
+    val enhancedByAI: Boolean = false // Whether AI enhanced the text
 )

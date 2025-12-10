@@ -31,17 +31,33 @@ class MainActivity : ComponentActivity() {
         // initialize repository for local persistence
         Repository.init(applicationContext)
         
-        // Create demo account if it doesn't exist
-        if (Repository.getUserByEmail("teacher@demo.com") == null) {
-            Repository.saveUser(
-                com.example.myapplication.data.User(
-                    id = java.util.UUID.randomUUID().toString(),
-                    email = "teacher@demo.com",
-                    password = "demo123",
-                    name = "Demo Teacher",
-                    role = com.example.myapplication.data.UserRole.TEACHER
+        try {
+            // Create demo account if it doesn't exist
+            if (Repository.getUserByEmail("teacher@demo.com") == null) {
+                Repository.saveUser(
+                    com.example.myapplication.data.User(
+                        id = java.util.UUID.randomUUID().toString(),
+                        email = "teacher@demo.com",
+                        password = "demo123",
+                        name = "Demo Teacher",
+                        role = com.example.myapplication.data.UserRole.TEACHER
+                    )
                 )
-            )
+                android.util.Log.d("MainActivity", "Demo user created")
+            }
+            
+            // Initialize demo data for first-time users
+            Repository.initializeDemoData(applicationContext)
+            android.util.Log.d("MainActivity", "Demo data initialized")
+            
+            // Verify data was loaded
+            val questionCount = Repository.loadQuestions().size
+            val studentCount = Repository.loadStudents().size
+            val scanCount = Repository.loadScans().size
+            android.util.Log.d("MainActivity", "Loaded: $questionCount questions, $studentCount students, $scanCount scans")
+            
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "Error initializing demo data", e)
         }
         
         enableEdgeToEdge()
