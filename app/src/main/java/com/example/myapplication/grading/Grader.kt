@@ -15,29 +15,45 @@ object Grader {
         val details = mutableMapOf<String, Double>()
         var total = 0.0
 
+        android.util.Log.d("Grader", "=== TRADITIONAL GRADING ===")
+        android.util.Log.d("Grader", "Questions: ${questions.size}, Answers: ${answers.size}")
+
         for (q in questions) {
             val studentAns = answers[q.id] ?: ""
+            android.util.Log.d("Grader", "\nQuestion: ${q.id} (${q.type})")
+            android.util.Log.d("Grader", "Correct: '${q.answer}'")
+            android.util.Log.d("Grader", "Student: '$studentAns'")
+            
             val score = when (q.type) {
                 com.example.myapplication.data.QuestionType.MCQ -> {
-                    if (studentAns.trim().equals(q.answer.trim(), ignoreCase = true)) q.weight else 0.0
+                    val match = studentAns.trim().equals(q.answer.trim(), ignoreCase = true)
+                    val result = if (match) q.weight else 0.0
+                    android.util.Log.d("Grader", "MCQ Match: $match, Score: $result/${q.weight}")
+                    result
                 }
                 com.example.myapplication.data.QuestionType.SHORT_TEXT -> {
                     // For short text, use keyword matching and partial credit
                     val sim = similarity(studentAns, q.answer)
                     // Give more generous scoring for short answers (min 40% if any keywords match)
                     val adjustedSim = if (sim > 0.3) sim.coerceAtLeast(0.4) else sim
-                    adjustedSim * q.weight
+                    val result = adjustedSim * q.weight
+                    android.util.Log.d("Grader", "SHORT_TEXT Similarity: $sim, Adjusted: $adjustedSim, Score: $result/${q.weight}")
+                    result
                 }
                 com.example.myapplication.data.QuestionType.LONG_TEXT,
                 com.example.myapplication.data.QuestionType.ESSAY -> {
                     val sim = similarity(studentAns, q.answer)
-                    sim * q.weight
+                    val result = sim * q.weight
+                    android.util.Log.d("Grader", "ESSAY Similarity: $sim, Score: $result/${q.weight}")
+                    result
                 }
             }
             details[q.id] = score
             total += score
         }
 
+        android.util.Log.d("Grader", "\nTotal Score: $total")
+        android.util.Log.d("Grader", "=== GRADING COMPLETE ===")
         return ExamResult(studentId = studentId, examId = examId, totalScore = total, details = details)
     }
 

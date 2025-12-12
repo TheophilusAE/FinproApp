@@ -10,11 +10,23 @@ object Repository {
 
     fun init(context: Context) {
         baseDir = context.filesDir
+        android.util.Log.d("Repository", "Repository initialized with baseDir: ${baseDir?.absolutePath}")
     }
 
-    private fun questionsFile(): File = File(baseDir, "questions.json")
+    private fun questionsFile(): File {
+        if (baseDir == null) {
+            android.util.Log.e("Repository", "ERROR: baseDir is null! Repository not initialized!")
+        }
+        return File(baseDir, "questions.json")
+    }
+    
     private fun scansFile(): File = File(baseDir, "scans.json")
-    private fun resultsFile(): File = File(baseDir, "results.json")
+    private fun resultsFile(): File {
+        if (baseDir == null) {
+            android.util.Log.e("Repository", "ERROR: baseDir is null when accessing results file!")
+        }
+        return File(baseDir, "results.json")
+    }
     private fun usersFile(): File = File(baseDir, "users.json")
     private fun studentsFile(): File = File(baseDir, "students.json")
     private fun classSectionsFile(): File = File(baseDir, "class_sections.json")
@@ -176,27 +188,64 @@ object Repository {
     }
 
     fun saveExamResult(result: ExamResult) {
-        val list = loadExamResults().toMutableList()
-        list.add(result)
-        val arr = org.json.JSONArray()
-        list.forEach { r ->
-            val o = org.json.JSONObject()
-            o.put("studentId", r.studentId)
-            o.put("examId", r.examId)
-            o.put("totalScore", r.totalScore)
-            val details = org.json.JSONObject()
-            r.details.forEach { (k, v) -> details.put(k, v) }
-            o.put("details", details)
-            arr.put(o)
+        try {
+            android.util.Log.d("Repository", "=== SAVING EXAM RESULT ===")
+            android.util.Log.d("Repository", "Student ID: ${result.studentId}")
+            android.util.Log.d("Repository", "Exam ID: ${result.examId}")
+            android.util.Log.d("Repository", "Score: ${result.totalScore}")
+            android.util.Log.d("Repository", "Details: ${result.details}")
+            
+            val list = loadExamResults().toMutableList()
+            android.util.Log.d("Repository", "Loaded existing results: ${list.size}")
+            
+            list.add(result)
+            android.util.Log.d("Repository", "Total results after add: ${list.size}")
+            
+            val arr = org.json.JSONArray()
+            list.forEach { r ->
+                val o = org.json.JSONObject()
+                o.put("studentId", r.studentId)
+                o.put("examId", r.examId)
+                o.put("totalScore", r.totalScore)
+                val details = org.json.JSONObject()
+                r.details.forEach { (k, v) -> details.put(k, v) }
+                o.put("details", details)
+                arr.put(o)
+            }
+            
+            val file = resultsFile()
+            android.util.Log.d("Repository", "Results file path: ${file.absolutePath}")
+            android.util.Log.d("Repository", "File exists before write: ${file.exists()}")
+            
+            file.writeText(arr.toString(2))
+            
+            android.util.Log.d("Repository", "File exists after write: ${file.exists()}")
+            android.util.Log.d("Repository", "File size: ${file.length()} bytes")
+            android.util.Log.d("Repository", "=== SAVE COMPLETE ===")
+        } catch (e: Exception) {
+            android.util.Log.e("Repository", "ERROR saving exam result", e)
         }
-        resultsFile().writeText(arr.toString(2))
     }
 
     fun loadExamResults(): List<ExamResult> {
         val f = resultsFile()
-        if (!f.exists()) return emptyList()
+        android.util.Log.d("Repository", "=== LOADING EXAM RESULTS ===")
+        android.util.Log.d("Repository", "Results file path: ${f.absolutePath}")
+        android.util.Log.d("Repository", "File exists: ${f.exists()}")
+        
+        if (!f.exists()) {
+            android.util.Log.d("Repository", "File doesn't exist, returning empty list")
+            return emptyList()
+        }
+        
         return try {
-            val arr = org.json.JSONArray(f.readText())
+            val content = f.readText()
+            android.util.Log.d("Repository", "File size: ${f.length()} bytes")
+            android.util.Log.d("Repository", "File content preview: ${content.take(200)}")
+            
+            val arr = org.json.JSONArray(content)
+            android.util.Log.d("Repository", "JSON array length: ${arr.length()}")
+            
             val out = mutableListOf<ExamResult>()
             for (i in 0 until arr.length()) {
                 val o = arr.getJSONObject(i)
@@ -209,16 +258,22 @@ object Repository {
                         details[key] = d.optDouble(key, 0.0)
                     }
                 }
-                out.add(ExamResult(
+                val result = ExamResult(
                     studentId = o.optString("studentId"),
                     examId = o.optString("examId"),
                     totalScore = o.optDouble("totalScore", 0.0),
                     details = details
-                ))
+                )
+                android.util.Log.d("Repository", "Loaded result $i: Student=${result.studentId}, Exam=${result.examId}, Score=${result.totalScore}")
+                out.add(result)
             }
+            android.util.Log.d("Repository", "=== LOAD COMPLETE: ${out.size} results ===")
             out
-        } catch (e: Exception) { emptyList() }
-    }
+        } catch (e: Exception) {
+            android.util.Log.e("Repository", "ERROR loading exam results", e)
+            emptyList()
+        }
+    } 
     
     fun deleteExamResult(studentId: String, examId: String) {
         val list = loadExamResults().toMutableList()
@@ -440,20 +495,20 @@ object Repository {
         return loadAnswerKeyTemplates().firstOrNull { it.examId == examId }
     }
     
-    // Initialize demo data for first-time users
+    // Initialize demo data for first-time users ONLY
     fun initializeDemoData(context: Context) {
         try {
             val prefs = context.getSharedPreferences("finpro_app_prefs", Context.MODE_PRIVATE)
-            val currentDataVersion = prefs.getInt("demo_data_version", 0)
-            val DEMO_DATA_VERSION = 2 // Increment this when demo data changes
+            val isInitialized = prefs.getBoolean("demo_data_initialized", false)
             
-            // Force reinitialize if version changed or data is empty
+            // ONLY initialize if NEVER initialized before (first launch)
             val currentQuestions = loadQuestions()
             android.util.Log.d("Repository", "Current questions count: ${currentQuestions.size}")
-            android.util.Log.d("Repository", "Demo data version: $currentDataVersion (expected: $DEMO_DATA_VERSION)")
+            android.util.Log.d("Repository", "Demo data initialized: $isInitialized")
             
-            if (currentQuestions.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
-                android.util.Log.d("Repository", "Initializing demo questions (version $DEMO_DATA_VERSION)...")
+            // Only run on first launch when questions are empty
+            if (currentQuestions.isEmpty() && !isInitialized) {
+                android.util.Log.d("Repository", "Initializing demo questions for first launch...")
                 // Add comprehensive sample questions with various types
             val sampleQuestions = listOf(
                 // MCQ Questions
@@ -572,18 +627,15 @@ object Repository {
             )
             saveQuestions(sampleQuestions)
             android.util.Log.d("Repository", "Saved ${sampleQuestions.size} demo questions")
-            
-            // Update version after successful initialization
-            prefs.edit().putInt("demo_data_version", DEMO_DATA_VERSION).apply()
-            android.util.Log.d("Repository", "Demo data version updated to $DEMO_DATA_VERSION")
         } else {
-            android.util.Log.d("Repository", "Questions already exist and version is current, skipping initialization")
+            android.util.Log.d("Repository", "Questions already exist or already initialized, skipping initialization")
         }
         
         val currentStudents = loadStudents()
         android.util.Log.d("Repository", "Current students count: ${currentStudents.size}")
         
-        if (currentStudents.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
+        // Only initialize students if empty and not initialized before
+        if (currentStudents.isEmpty() && !isInitialized) {
             android.util.Log.d("Repository", "Initializing demo students...")
             // Add sample students
             val sampleStudents = listOf(
@@ -660,14 +712,19 @@ object Repository {
             )
             saveStudents(sampleStudents)
             android.util.Log.d("Repository", "Saved ${sampleStudents.size} demo students")
+            
+            // Mark as initialized - this prevents reinitialization on app updates
+            prefs.edit().putBoolean("demo_data_initialized", true).apply()
+            android.util.Log.d("Repository", "Demo data initialization complete - will never reinitialize")
         } else {
-            android.util.Log.d("Repository", "Students already exist and version is current, skipping initialization")
+            android.util.Log.d("Repository", "Students already exist, skipping initialization")
         }
         
         val currentClasses = loadClassSections()
         android.util.Log.d("Repository", "Current classes count: ${currentClasses.size}")
         
-        if (currentClasses.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
+        // Only initialize classes if empty and not initialized before
+        if (currentClasses.isEmpty() && !isInitialized) {
             android.util.Log.d("Repository", "Initializing demo classes...")
             // Add sample classes
             val sampleClasses = listOf(
@@ -696,13 +753,14 @@ object Repository {
             saveClassSections(sampleClasses)
             android.util.Log.d("Repository", "Saved ${sampleClasses.size} demo classes")
         } else {
-            android.util.Log.d("Repository", "Classes already exist and version is current, skipping initialization")
+            android.util.Log.d("Repository", "Classes already exist, skipping initialization")
         }
         
         val currentScans = loadScans()
         android.util.Log.d("Repository", "Current scans count: ${currentScans.size}")
         
-        if (currentScans.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
+        // Only initialize scans if empty and not initialized before
+        if (currentScans.isEmpty() && !isInitialized) {
             android.util.Log.d("Repository", "Initializing demo scans...")
             // Add realistic sample scans with various answer types
             val sampleScans = listOf(
@@ -824,13 +882,14 @@ Essay: Climate change impacts our planet through rising temperatures and extreme
             saveScans(sampleScans)
             android.util.Log.d("Repository", "Saved ${sampleScans.size} demo scans")
         } else {
-            android.util.Log.d("Repository", "Scans already exist and version is current, skipping initialization")
+            android.util.Log.d("Repository", "Scans already exist, skipping initialization")
         }
         
         val currentResults = loadExamResults()
         android.util.Log.d("Repository", "Current results count: ${currentResults.size}")
         
-        if (currentResults.isEmpty() || currentDataVersion < DEMO_DATA_VERSION) {
+        // CRITICAL: NEVER overwrite results - only initialize if empty and not initialized
+        if (currentResults.isEmpty() && !isInitialized) {
             android.util.Log.d("Repository", "Initializing demo results...")
             // Add comprehensive sample exam results
             val sampleResults = listOf(
@@ -914,7 +973,7 @@ Essay: Climate change impacts our planet through rising temperatures and extreme
             sampleResults.forEach { saveExamResult(it) }
             android.util.Log.d("Repository", "Saved ${sampleResults.size} demo results")
         } else {
-            android.util.Log.d("Repository", "Results already exist and version is current, skipping initialization")
+            android.util.Log.d("Repository", "Results already exist or previously initialized - PRESERVING user data")
         }
         
         android.util.Log.d("Repository", "Demo data initialization completed successfully")

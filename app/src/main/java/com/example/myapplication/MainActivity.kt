@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
             MyApplicationTheme(darkTheme = darkTheme) {
                 // crossfade content when theme changes for a smooth transition
-                Crossfade(targetState = darkTheme) { _ ->
+                Crossfade(targetState = darkTheme) { isDark ->
                     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                         if (userSession == null) {
                             // Show authentication screens

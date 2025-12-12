@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -58,6 +59,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.School
 import androidx.compose.material.icons.filled.Class
 import androidx.compose.material.icons.filled.AutoAwesome
+import com.example.myapplication.R
 import com.example.myapplication.data.Repository
 import com.example.myapplication.ai.GeminiService
 
@@ -69,10 +71,14 @@ fun DashboardScreen(navController: NavController) {
     var resultCount by remember { mutableStateOf(0) }
     val hasAI by remember { mutableStateOf(GeminiService.hasApiKey()) }
     
-    LaunchedEffect(Unit) {
+    // Reload stats every time screen becomes visible
+    DisposableEffect(Unit) {
         questionCount = Repository.loadQuestions().size
         scanCount = Repository.loadScans().size
         resultCount = Repository.loadExamResults().size
+        android.util.Log.d("DashboardScreen", "Stats updated - Q:$questionCount S:$scanCount R:$resultCount")
+        
+        onDispose { }
     }
     
     val features = listOf(
@@ -127,9 +133,10 @@ fun DashboardScreen(navController: NavController) {
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "📝",
-                            style = MaterialTheme.typography.displaySmall
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.app_logo_removebg),
+                            contentDescription = "App Logo",
+                            modifier = Modifier.size(56.dp)
                         )
                     }
                 }

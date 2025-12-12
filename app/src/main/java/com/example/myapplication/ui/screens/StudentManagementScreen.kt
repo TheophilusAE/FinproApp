@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,14 +33,23 @@ fun StudentManagementScreen(
     repository: Repository,
     onNavigateBack: () -> Unit
 ) {
-    var students by remember { mutableStateOf(repository.loadStudents()) }
-    var classSections by remember { mutableStateOf(repository.loadClassSections()) }
+    var students by remember { mutableStateOf(emptyList<Student>()) }
+    var classSections by remember { mutableStateOf(emptyList<ClassSection>()) }
     var showAddDialog by remember { mutableStateOf(false) }
     var editingStudent by remember { mutableStateOf<Student?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedClassFilter by remember { mutableStateOf<String?>(null) }
     var showDeleteConfirm by remember { mutableStateOf<Student?>(null) }
     var visible by remember { mutableStateOf(false) }
+
+    // Reload students every time screen becomes visible
+    DisposableEffect(Unit) {
+        students = repository.loadStudents()
+        classSections = repository.loadClassSections()
+        android.util.Log.d("StudentManagement", "Loaded ${students.size} students")
+        
+        onDispose { }
+    }
 
     LaunchedEffect(Unit) {
         delay(100)

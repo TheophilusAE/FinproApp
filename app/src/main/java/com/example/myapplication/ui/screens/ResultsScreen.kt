@@ -45,6 +45,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -61,11 +62,23 @@ fun ResultsScreen(navController: NavController) {
     var selectedExamId by remember { mutableStateOf<String?>(null) }
     var showFilters by remember { mutableStateOf(false) }
     var deleteConfirmResult by remember { mutableStateOf<ExamResult?>(null) }
+    var refreshTrigger by remember { mutableStateOf(0) }
 
-    LaunchedEffect(Unit) {
+    // Reload results every time screen becomes visible
+    DisposableEffect(Unit) {
         allResults.clear()
         allResults.addAll(Repository.loadExamResults())
         filteredResults = allResults.toList()
+        android.util.Log.d("ResultsScreen", "Loaded ${allResults.size} results")
+        
+        onDispose { }
+    }
+    
+    LaunchedEffect(refreshTrigger) {
+        allResults.clear()
+        allResults.addAll(Repository.loadExamResults())
+        filteredResults = allResults.toList()
+        android.util.Log.d("ResultsScreen", "Refreshed ${allResults.size} results")
     }
     
     LaunchedEffect(selectedExamId) {
@@ -322,13 +335,9 @@ fun ResultsScreen(navController: NavController) {
                 Button(
                     onClick = {
                         Repository.deleteExamResult(result.studentId, result.examId)
-                        allResults.removeAll { it.studentId == result.studentId && it.examId == result.examId }
-                        filteredResults = if (selectedExamId == null) {
-                            allResults.toList()
-                        } else {
-                            allResults.filter { it.examId == selectedExamId }
-                        }
                         deleteConfirmResult = null
+                        // Trigger refresh
+                        refreshTrigger++
                     },
                     colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error

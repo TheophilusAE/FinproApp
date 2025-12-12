@@ -192,7 +192,11 @@ fun AppNavHost(
         ) {
             composable("dashboard") { DashboardScreen(navController) }
             composable("scan") { ScanScreen(navController, cameraPermissionGranted) }
-            composable("results") { ResultsScreen(navController) }
+            composable(
+                route = "results"
+            ) { 
+                ResultsScreen(navController) 
+            }
             composable("questionbank") { QuestionBankScreen(navController) }
             composable("scanhistory") { ScanHistoryScreen(navController) }
             composable("grading") { GradingWorkflowScreen(navController) }
